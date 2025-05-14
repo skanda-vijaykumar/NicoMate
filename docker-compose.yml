@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: nicomate-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./data:/app/data
+      - ./extracted_best:/app/extracted_best
+    depends_on:
+      - db
+      - ollama
+    environment:
+      - POSTGRES_HOST=db
+      - OLLAMA_HOST=ollama
+      - SERPER_API_KEY="a49f2db4b8df6ffba254aacc9a7d4dded2f50c1c"
+      - TAVILY_API_KEY="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"
+      - LANGCHAIN_API_KEY="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"
+      - LANGCHAIN_TRACING_V2=true
+      - LANGCHAIN_PROJECT=SQL_memory
+      - LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    container_name: nicomate-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=aspirine13z
+      - POSTGRES_DB=alexis
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nicomate-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    volumes:
+      - ./init-ollama.sh:/init-ollama.sh
+    command: >
+      sh -c "
+        chmod +x /init-ollama.sh && 
+        sleep 5 && 
+        /init-ollama.sh
+      "
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  ollama_data:

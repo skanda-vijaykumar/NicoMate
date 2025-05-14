@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+# Docker
+.dockerignore
+
+# Temporary files
+tmp/
+temp/
+
+# Database
+*.db
+*.sqlite3
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node modules if any
+node_modules/
+
+# Data directories (may contain large files)
+data/*
+!data/.gitkeep
+extracted_best/*
+!extracted_best/.gitkeep
+
+# Model caches
+.cache/

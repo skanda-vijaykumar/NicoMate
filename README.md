@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Nicomate
 
 
@@ -91,3 +92,45 @@ For open source projects, say how it is licensed.
 
 ## Project status
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+=======
+# Nicomatic Chatbot
+
+A modular, dockerized chatbot application for Nicomatic customer support.
+
+## Features
+
+- Connector selection based on user requirements
+- Technical documentation search
+- Connector dimensions lookup
+- Web search for general information
+- Interactive chat interface
+
+## Architecture
+
+The application is built with a modular architecture:
+
+- **FastAPI** backend for API endpoints
+- **PostgreSQL** for chat history storage
+- **Ollama** for local LLM inference
+- **Docker** for containerization
+- **GitLab CI/CD** for automated testing and deployment
+
+## Getting Started
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Git
+- API keys for:
+  - Tavily (search API)
+  - Google Serper (search API)
+  - LangChain (if using LangSmith for monitoring)
+
+### Setup
+
+1. Clone the repository:
+
+```bash
+git clone git@gitlab.com:your-username/nicomatic-chatbot.git
+cd nicomatic-chatbot
+>>>>>>> 06993f0 (Initial commit)

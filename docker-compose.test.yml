@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  test:
+    build: .
+    container_name: nicomate-test
+    volumes:
+      - ./app:/app/app
+      - ./tests:/app/tests
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./data:/app/data
+      - ./extracted_best:/app/extracted_best
+    depends_on:
+      - test-db
+      - test-ollama
+    environment:
+      - POSTGRES_HOST=test-db
+      - OLLAMA_HOST=test-ollama
+      - SERPER_API_KEY=${SERPER_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - TESTING=True
+    command: pytest -xvs tests/
+
+  test-db:
+    image: postgres:15-alpine
+    container_name: nicomate-test-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=aspirine13z
+      - POSTGRES_DB=alexis_test
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  test-ollama:
+    image: ollama/ollama:latest
+    container_name: nicomate-test-ollama
+    volumes:
+      - test_ollama_data:/root/.ollama
+    command: >
+      sh -c "
+        ollama serve &
+        sleep 5 &&
+        ollama pull llama3.1 &&
+        ollama pull nomic-embed-text &&
+        wait
+      "
+
+volumes:
+  test_ollama_data:
