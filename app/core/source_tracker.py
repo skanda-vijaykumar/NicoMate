@@ -2,9 +2,10 @@ from typing import List
 import logging
 from llama_index.core.schema import NodeWithScore
 
+
 class SourceTracker:
     """Track sources for response generation."""
-    
+
     _instance = None
 
     def __new__(cls):
@@ -37,24 +38,26 @@ class SourceTracker:
         seen_sources = set()
         for node in self.nodes:
             # Access metadata from the inner node object
-            if hasattr(node, 'node') and hasattr(node.node, 'metadata'):
+            if hasattr(node, "node") and hasattr(node.node, "metadata"):
                 source = node.node.metadata.get("source", "Unknown")
                 family = node.node.metadata.get("connector_family", "Unknown")
                 # Avoid duplicate source/family pairs in the summary text
                 if source != "Unknown" and (source, family) not in seen_sources:
-                     sources_list.append(f"{source} ({family})")
-                     seen_sources.add((source, family))
+                    sources_list.append(f"{source} ({family})")
+                    seen_sources.add((source, family))
 
         if sources_list:
-             return "\n\nSource documents: " + ", ".join(sorted(list(seen_sources), key=lambda x: x[0]))
+            return "\n\nSource documents: " + ", ".join(
+                sorted(list(seen_sources), key=lambda x: x[0])
+            )
         return ""
 
     def get_absolute_paths(self) -> List[str]:
         """Get absolute paths of source documents."""
         paths = set()
         for node in self.nodes:
-             # Access metadata from the inner node object
-            if hasattr(node, 'node') and hasattr(node.node, 'metadata'):
+            # Access metadata from the inner node object
+            if hasattr(node, "node") and hasattr(node.node, "metadata"):
                 path = node.node.metadata.get("absolute_path", None)
                 if path:
                     paths.add(path)

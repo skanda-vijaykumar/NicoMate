@@ -19,7 +19,7 @@ app = FastAPI()
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,32 +38,36 @@ from app.api.routes import router as api_router
 # Include API routes
 app.include_router(api_router)
 
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize the application on startup."""
     global session_mapping, app_ready
-    
+
     try:
         # Set environment variable to indicate we're running in Docker
         os.environ["RUNNING_IN_DOCKER"] = "True"
-        
+
         # Initialize database
         logging.info("Initializing database...")
         initialize_database()
-        
+
         # Load session mapping
         session_mapping = load_session_mapping()
         logging.info(f"Loaded {len(session_mapping)} existing sessions")
-        
+
         # Initialize data and models
         from app.api.dependencies import initialize_data_and_models
+
         await initialize_data_and_models()
-        
+
         # Mark app as ready
         app_ready = True
         logging.info("Application startup complete - ready to handle requests")
-        
+
     except Exception as e:
         logging.error(f"Error during startup: {str(e)}")
         # Don't re-raise the exception to allow the app to start even with errors
-        logging.warning("Application started with errors. Some functionality may be limited.")
+        logging.warning(
+            "Application started with errors. Some functionality may be limited."
+        )

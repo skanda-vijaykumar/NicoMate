@@ -6,59 +6,71 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from app.config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
+
 async def determine_route(user_input, formatted_chat_history):
     """Determine whether to route to general or selection path."""
+
     # Direct routing based on patterns
     def pre_process_routing(user_input, formatted_chat_history):
         # Force routing to general for any input with a question mark
-        if '?' in user_input:
-            logging.info("Direct routing enforcement: Input contains question mark, routing to general")
-            return {'score': 'general'}
-        
+        if "?" in user_input:
+            logging.info(
+                "Direct routing enforcement: Input contains question mark, routing to general"
+            )
+            return {"score": "general"}
+
         # Check for WH-question words about connector properties
-        wh_words = ['what', 'where', 'why', 'who', 'how', 'which', 'when']
+        wh_words = ["what", "where", "why", "who", "how", "which", "when"]
         if any(word in user_input.lower() for word in wh_words):
-            logging.info("Direct routing enforcement: Input contains WH-question words, routing to general")
-            return {'score': 'general'}
-        
+            logging.info(
+                "Direct routing enforcement: Input contains WH-question words, routing to general"
+            )
+            return {"score": "general"}
+
         # Split the chat history to get the last message from the assistant
-        messages = formatted_chat_history.split('\n')
-        assistant_messages = [m for m in messages if m.startswith('AI:')]
-        
+        messages = formatted_chat_history.split("\n")
+        assistant_messages = [m for m in messages if m.startswith("AI:")]
+
         if assistant_messages:
             last_assistant_message = assistant_messages[-1][4:]  # Remove 'AI: ' prefix
-            
+
             # Check if the last message was a recommendation
-            connector_names = ['AMM', 'CMM', 'DMM', 'EMM']
-            recommended_connectors = [c for c in connector_names if c in last_assistant_message]
-            
+            connector_names = ["AMM", "CMM", "DMM", "EMM"]
+            recommended_connectors = [
+                c for c in connector_names if c in last_assistant_message
+            ]
+
             # If the last message contained a connector recommendation
-            if recommended_connectors and any(p in user_input.lower() for p in ['it', 'this connector', 'the connector']):
-                logging.info("Direct routing enforcement: Question about recommended connector, routing to general")
-                return {'score': 'general'}
-        
+            if recommended_connectors and any(
+                p in user_input.lower()
+                for p in ["it", "this connector", "the connector"]
+            ):
+                logging.info(
+                    "Direct routing enforcement: Question about recommended connector, routing to general"
+                )
+                return {"score": "general"}
+
         # Let the LLM handle other cases
         return None
-    
+
     # Check pre-processing first
     pre_processed_route = pre_process_routing(user_input, formatted_chat_history)
     if pre_processed_route is not None:
-        return pre_processed_route['score']
-    
+        return pre_processed_route["score"]
+
     # Use LLM for more complex routing decisions
     try:
         llm = ChatOllama(
-            model=OLLAMA_MODEL, 
-            temperature=0.0, 
-            num_ctx=8152, 
-            cache=False, 
+            model=OLLAMA_MODEL,
+            temperature=0.0,
+            num_ctx=8152,
+            cache=False,
             base_url=OLLAMA_BASE_URL,
-            format="json"
+            format="json",
         )
-        
+
         prompt = PromptTemplate(
-            template=
-             """
+            template="""
     <|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
     You are a precise query routing AI. Your job is to analyze the conversation CONTEXT (`history`) and the user's INTENT in their latest input (`question`) to correctly route the query to either the 'selection' or 'general' channel.
@@ -108,29 +120,34 @@ async def determine_route(user_input, formatted_chat_history):
     Here is the human input: {question}
 
     <|eot_id|><|start_header_id|>assistant<|end_header_id|>
-    """, input_variables=["question", "history"]
+    """,
+            input_variables=["question", "history"],
         )
 
         retrieval_grader = prompt | llm | JsonOutputParser()
-        
-        routing_result = await retrieval_grader.invoke({"question": user_input, "history": formatted_chat_history})
+
+        routing_result = await retrieval_grader.invoke(
+            {"question": user_input, "history": formatted_chat_history}
+        )
         logging.info(f"LLM routing result: {routing_result}")
-        
-        if not isinstance(routing_result, dict) or 'score' not in routing_result:
+
+        if not isinstance(routing_result, dict) or "score" not in routing_result:
             # Fallback to general routing if response is invalid
-            routing_result = {'score': 'general'}
-            logging.warning(f"Invalid routing response, falling back to general. Response: {routing_result}")
-                
-        route = routing_result['score']
-            
+            routing_result = {"score": "general"}
+            logging.warning(
+                f"Invalid routing response, falling back to general. Response: {routing_result}"
+            )
+
+        route = routing_result["score"]
+
         # Validate route value
-        if route not in ['selection', 'general']:
-            route = 'general'
+        if route not in ["selection", "general"]:
+            route = "general"
             logging.warning(f"Invalid route value: {route}, falling back to general")
-            
+
         return route
-        
+
     except Exception as e:
         logging.error(f"Error in route determination: {str(e)}")
         # Default to general on error
-        return 'general'
+        return "general"
