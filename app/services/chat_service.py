@@ -2,6 +2,7 @@ import logging
 from langchain_core.messages import AIMessage
 from app.api.dependencies import return_agent
 from app.core.source_tracker import SourceTracker
+import os
 
 
 async def generate_response(user_input, formatted_chat_history, agent, session_history):
@@ -29,12 +30,6 @@ async def generate_response(user_input, formatted_chat_history, agent, session_h
                     tool_name = (
                         step[0].tool if hasattr(step[0], "tool") else "Unknown tool"
                     )
-                    tool_input = (
-                        step[0].tool_input
-                        if hasattr(step[0], "tool_input")
-                        else "Unknown input"
-                    )
-
                     # Track used tools
                     used_tools.append(tool_name)
 
@@ -74,10 +69,10 @@ async def generate_response(user_input, formatted_chat_history, agent, session_h
 
                 \nHere is information gathered from our systems:
                 \n{''.join(intermediate_data)}
-                
+
                 \nconversation history just for context:
                 \n{formatted_chat_history}
-                
+
                 """
 
                 synthesized_response = await llm.ainvoke(llm_prompt)
