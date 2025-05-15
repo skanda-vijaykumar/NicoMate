@@ -8,11 +8,11 @@ from langchain_ollama import ChatOllama
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain import hub
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+import os
 
 # Import these at the top to avoid E402 errors
 # (With a comment explaining why they were previously imported later)
 from app.core.data_loader import load_data, process_data
-from app.services.tool_factory import create_tools
 
 from app.config import (
     OLLAMA_BASE_URL,
@@ -40,7 +40,24 @@ async def initialize_data_and_models():
 
     with startup_lock:
         try:
-            # Load and process data
+            # Check if we're in testing mode
+            testing_mode = os.environ.get("TESTING", "False").lower() == "true"
+            
+            if testing_mode:
+                # For testing, set indices to minimal placeholders
+                from llama_index.core import VectorStoreIndex, SimpleKeywordTableIndex, Document
+                dummy_doc = Document(text="Test document")
+                
+                vector_index_markdown = VectorStoreIndex([dummy_doc])
+                keyword_index_markdown = SimpleKeywordTableIndex([dummy_doc])
+                vector_index_markdown_lab = VectorStoreIndex([dummy_doc])
+                keyword_index_markdown_lab = SimpleKeywordTableIndex([dummy_doc])
+                
+                logging.info("Running in test mode with minimal indices")
+                startup_complete.set()
+                return
+            
+            # Normal mode - load and process actual data
             logging.info("Loading data...")
             documents1, documents3 = load_data(EXTRACTED_DATA_DIR)
             logging.info(
@@ -68,6 +85,7 @@ async def initialize_data_and_models():
             agent_pool = ThreadPoolExecutor(max_workers=MAX_AGENTS)
 
             # Create tools
+            from app.services.tool_factory import create_tools
             tools = create_tools()
 
             # Pre-create agents
@@ -91,6 +109,24 @@ async def initialize_data_and_models():
 
 def create_isolated_agent(tools):
     """Create an isolated agent with its own LLM instance."""
+    # Check if we're in testing mode
+    testing_mode = os.environ.get("TESTING", "False").lower() == "true"
+    
+    if testing_mode:
+        # For testing, create a simplified agent
+        logging.info("Creating simplified agent for testing")
+        
+        # Create a mock agent that doesn't actually use Ollama
+        class MockAgent:
+            async def ainvoke(self, input_data):
+                return {
+                    "output": "This is a test response from the mock agent.",
+                    "intermediate_steps": []
+                }
+        
+        return MockAgent()
+    
+    # Normal agent creation
     llm = ChatOllama(
         model=OLLAMA_MODEL,
         temperature=0.0,
@@ -118,6 +154,14 @@ def create_isolated_agent(tools):
 
 async def get_agent(tools):
     """Get an agent from the pool or create a new one."""
+    # Check if we're in testing mode
+    testing_mode = os.environ.get("TESTING", "False").lower() == "true"
+    
+    if testing_mode:
+        # In testing mode, return a mock agent
+        logging.info("Creating testing agent")
+        return create_isolated_agent(tools)
+    
     try:
         # Try to get an existing agent from the queue
         agent = agent_queue.get_nowait()
@@ -129,6 +173,10 @@ async def get_agent(tools):
 
 def return_agent(agent):
     """Return an agent to the pool."""
+    # Don't return mock testing agents to the pool
+    if os.environ.get("TESTING", "False").lower() == "true":
+        return
+        
     try:
         agent_queue.put(agent, block=False)
     except queue.Full:
