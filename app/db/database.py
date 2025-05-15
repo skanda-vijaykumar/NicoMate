@@ -1,12 +1,27 @@
 import psycopg
 import logging
 from app.config import DB_URI
+import os
+
+def get_db_uri():
+    """Get database URI based on environment."""
+    if os.environ.get("TESTING", "False").lower() == "true":
+        # Use test database when in testing mode
+        from app.config import DB_USER, DB_PASSWORD, DB_HOST
+        test_db = os.environ.get("POSTGRES_DB", "alexis_test")
+        return f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{test_db}"
+    else:
+        # Use default DB_URI from config
+        return DB_URI
 
 
 def initialize_database():
     """Initialize the database, creating tables and sequences if they don't exist."""
     try:
-        with psycopg.connect(DB_URI) as conn:
+        # Get appropriate DB URI based on environment
+        db_uri = get_db_uri()
+        
+        with psycopg.connect(db_uri) as conn:
             with conn.cursor() as cur:
                 # Check if chat_history table exists
                 cur.execute(
@@ -42,7 +57,7 @@ def initialize_database():
                     SELECT EXISTS (
                         SELECT 1 FROM pg_sequences
                         WHERE schemaname = 'public'
-                        AND sequencename = 'chat_history_id_seq'
+                        AND sequencename = 'chat_id_seq'
                     );
                 """
                 )
@@ -87,7 +102,10 @@ def get_next_chat_id(connection):
 def load_session_mapping():
     """Load the mapping of session IDs to chat IDs from the database."""
     try:
-        with psycopg.connect(DB_URI) as conn:
+        # Get appropriate DB URI based on environment
+        db_uri = get_db_uri()
+        
+        with psycopg.connect(db_uri) as conn:
             with conn.cursor() as cur:
                 # Get the most recent session for each chat_id
                 cur.execute(
@@ -114,4 +132,6 @@ def load_session_mapping():
 
 def get_db_connection():
     """Get a database connection."""
-    return psycopg.connect(DB_URI)
+    # Get appropriate DB URI based on environment
+    db_uri = get_db_uri()
+    return psycopg.connect(db_uri)
