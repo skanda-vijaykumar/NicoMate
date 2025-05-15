@@ -1,11 +1,10 @@
+from app.config import STATIC_DIR
+from app.db.database import initialize_database, load_session_mapping
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
-
-from app.config import STATIC_DIR, TEMPLATES_DIR
-from app.db.database import initialize_database, load_session_mapping
 
 # Configure logging
 logging.basicConfig(
@@ -33,7 +32,7 @@ session_mapping = {}
 app_ready = False
 
 # Import routes after app creation to avoid circular imports
-from app.api.routes import router as api_router
+from app.api.routes import router as api_router  # noqa: E402
 
 # Include API routes
 app.include_router(api_router)
