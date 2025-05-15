@@ -21,7 +21,42 @@ cache:
   chmod 600 ~/.ssh/id_rsa
   echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
 
+lint:
+  tags:
+        - self-hosted
+  stage: test
+  image: python:3.12
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+  before_script:
+    - pip install flake8 black
+  script:
+    - flake8 app/ --max-line-length=120 --exclude=__pycache__,__init__.py
+      --ignore=E501,W503,W293,W291,W292,F541,F841,F811,E302,F401,E128,E225,E231,E303
+  only:
+    - main
+    - merge_requests
+
+security:
+  tags:
+        - self-hosted
+  stage: test
+  image: python:3.12
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
+  before_script:
+    - pip install bandit safety
+  script:
+    - bandit -r app/ -ll
+    - safety check -r requirements.txt
+  allow_failure: true
+  only:
+    - main
+    - merge_requests
+
 test:
+  tags:
+      - self-hosted
   stage: test
   image: python:3.12
   services:
@@ -53,36 +88,9 @@ test:
     - main
     - merge_requests
 
-lint:
-  stage: test
-  image: python:3.12
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
-  before_script:
-    - pip install flake8 black
-  script:
-    - flake8 app/ --max-line-length=120 --exclude=__pycache__,__init__.py
-      --ignore=E501,W503,W293,W291,W292,F541,F841,F811,E302,F401,E128,E225,E231,E303
-  only:
-    - main
-    - merge_requests
-
-security:
-  stage: test
-  image: python:3.12
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.pip-cache"
-  before_script:
-    - pip install bandit safety
-  script:
-    - bandit -r app/ -ll
-    - safety check -r requirements.txt
-  allow_failure: true
-  only:
-    - main
-    - merge_requests
-
 build:
+  tags:
+        - self-hosted
   stage: build
   image: docker:20.10.16
   services:
@@ -102,6 +110,8 @@ build:
     - tags
 
 deploy_staging:
+  tags:
+        - self-hosted
   stage: deploy
   image: alpine:latest
   before_script:
@@ -126,6 +136,8 @@ deploy_staging:
     - main
 
 deploy_production:
+  tags:
+        - self-hosted
   stage: deploy
   image: alpine:latest
   before_script:
