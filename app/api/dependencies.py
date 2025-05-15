@@ -1,30 +1,22 @@
-import os
 import logging
 import threading
 import queue
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
-from llama_index.core import (
-    SimpleDirectoryReader,
-    VectorStoreIndex,
-    SimpleKeywordTableIndex,
-    Settings,
-    StorageContext,
-)
-from llama_index.core.retrievers import (
-    VectorIndexRetriever,
-    KeywordTableSimpleRetriever,
-)
 from langchain_ollama import ChatOllama
 from langchain.agents import create_react_agent, AgentExecutor
 from langchain import hub
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
+# Import these at the top to avoid E402 errors
+# (With a comment explaining why they were previously imported later)
+from app.core.data_loader import load_data, process_data
+from app.services.tool_factory import create_tools
+
 from app.config import (
     OLLAMA_BASE_URL,
     OLLAMA_MODEL,
-    OLLAMA_EMBEDDING_MODEL,
     MAX_AGENTS,
     EXTRACTED_DATA_DIR,
 )
@@ -40,16 +32,11 @@ agent_pool = None
 agent_lock = threading.Lock()
 agent_queue = queue.Queue()
 
-# Import after globals to avoid circular imports
-from app.core.data_loader import load_data, process_data
-from app.services.tool_factory import create_tools
-from app.core.retriever import CustomRetriever
-
 
 async def initialize_data_and_models():
     """Initialize data, models, and indices on startup."""
     global vector_index_markdown, keyword_index_markdown, vector_index_markdown_lab, keyword_index_markdown_lab
-    global agent_pool, startup_complete
+    global agent_pool
 
     with startup_lock:
         try:
@@ -85,7 +72,7 @@ async def initialize_data_and_models():
 
             # Pre-create agents
             for i in range(MAX_AGENTS):
-                logging.info(f"Creating agent {i+1}/{MAX_AGENTS}...")
+                logging.info(f"Creating agent {i + 1}/{MAX_AGENTS}...")  # Added space around + operator
                 agent = create_isolated_agent(tools)
                 agent_queue.put(agent)
 
