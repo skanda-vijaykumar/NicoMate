@@ -11,15 +11,12 @@ from app.api.dependencies import (
     keyword_index_markdown_lab,
 )
 from app.core.retriever import CustomRetriever
-from llama_index.core.retrievers import (
-    VectorIndexRetriever,
-    KeywordTableSimpleRetriever,
-)
-from llama_index.core.postprocessor import FlagEmbeddingReranker
+from llama_index.core.retrievers import VectorIndexRetriever, KeywordTableSimpleRetriever
+from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 from llama_index.core import get_response_synthesizer
 from llama_index.core.query_engine import RetrieverQueryEngine
 from app.core.source_tracker import SourceTracker
-
+from app.services.react_integration import ConnectorDimensionLangchainTool
 
 class RankedNodesLogger:
     def __init__(self, reranker):
@@ -47,7 +44,7 @@ class RankedNodesLogger:
                 abs_path = node.node.metadata.get("absolute_path", "Unknown path")
 
                 logging.info(
-                    f"Node {i+1}: {source} | Family: {family} | Type: {file_type} | Score: {score}"
+                    f"Node {i + 1}: {source} | Family: {family} | Type: {file_type} | Score: {score}"
                 )
                 logging.info(f"  Path: {abs_path}")
 
@@ -64,6 +61,13 @@ class RankedNodesLogger:
 
 def create_tools() -> List[BaseTool]:
     """Create tools for the agent to use."""
+    from app.api.dependencies import (
+        vector_index_markdown, 
+        keyword_index_markdown, 
+        vector_index_markdown_lab, 
+        keyword_index_markdown_lab
+    )
+    
     tools = []
 
     try:
@@ -112,7 +116,6 @@ def create_tools() -> List[BaseTool]:
                 response_synthesizer = get_response_synthesizer(
                     response_mode="compact_accumulate", verbose=True
                 )
-
                 hybrid_query_engine_markdown = RetrieverQueryEngine(
                     retriever=hybrid_retriever_markdown,
                     response_synthesizer=response_synthesizer,
@@ -133,11 +136,9 @@ def create_tools() -> List[BaseTool]:
                                 - All part number lookups and compatibility checks
                                 - Connector specifications including temperature ratings, electrical properties, materials and more
                                 - Any question about what "works with", "goes with", or is "compatible with" a part number
-                                
                             This tool contains comprehensive product information beyond just dimensions. For questions about connector compatibility, accessories, or cables, ALWAYS use this tool first.
-                            When using this tool make sure that the input if needed will have connector name mentioned which user is referring to like AMM, CMM, DMM, EMM. 
-                            """,
-                        ),
+                            When using this tool make sure that the input if needed will have connector name mentioned which user is referring to like AMM, CMM, DMM, EMM.
+                            """),
                     )
                 ]
 
@@ -227,8 +228,7 @@ def create_tools() -> List[BaseTool]:
         # Add connector dimension tool
         try:
             from app.config import EXTRACTED_DATA_DIR
-            from react_integration import ConnectorDimensionLangchainTool
-
+            
             dimension_tool = ConnectorDimensionLangchainTool(EXTRACTED_DATA_DIR)
             tools.append(dimension_tool)
             logging.info("Added connector dimension tool")
