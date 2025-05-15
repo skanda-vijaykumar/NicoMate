@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${CI_REGISTRY_IMAGE}:${IMAGE_TAG}
+    container_name: nicomate-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./extracted_best:/app/extracted_best
+    depends_on:
+      - db
+      - ollama
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:15-alpine
+    container_name: nicomate-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: nicomate-ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+
+  ollama-init:
+    image: ollama/ollama:latest
+    depends_on:
+      - ollama
+    volumes:
+      - ./init-ollama.sh:/init-ollama.sh
+    command: >
+      sh -c "
+        chmod +x /init-ollama.sh && 
+        sleep 5 && 
+        /init-ollama.sh
+      "
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  ollama_data:
