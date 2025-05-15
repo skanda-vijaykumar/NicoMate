@@ -4,12 +4,6 @@ from llama_index.core.tools import QueryEngineTool
 from llama_index.core.tools.types import ToolMetadata
 from langchain.tools import BaseTool, Tool
 from app.services.search import MultiSearchRetriever
-from app.api.dependencies import (
-    vector_index_markdown,
-    keyword_index_markdown,
-    vector_index_markdown_lab,
-    keyword_index_markdown_lab,
-)
 from app.core.retriever import CustomRetriever
 from llama_index.core.retrievers import VectorIndexRetriever, KeywordTableSimpleRetriever
 from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
