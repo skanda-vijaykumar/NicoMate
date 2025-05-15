@@ -2,10 +2,10 @@ import re
 import json
 import logging
 import asyncio
-from typing import Dict, Any, List, Tuple, Optional, Type
+from typing import Dict
 from langchain_ollama import ChatOllama
-from langchain_core.output_parsers import ResponseSchema, StructuredOutputParser
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 class LLMConnectorSelector:
@@ -36,14 +36,12 @@ class LLMConnectorSelector:
         self.system_prompt = """You are an expert in electronic connectors, specifically the AMM, CMM, DMM, and EMM connector families.
         Your role is to parse user responses to questions about connector requirements and extract meaningful information.
         You should handle uncertainty in responses and provide confidence scores.
-        
         Key points:
         - Provide clear numerical or boolean values when possible
         - Handle uncertain responses with appropriate confidence scores
         - Consider technical context of each question
         - Explain your reasoning
         """
-
         # Ground data sampled for the llm to grade instead of relying on RAG
         self.connectors = {
             "AMM": {
@@ -402,9 +400,7 @@ class LLMConnectorSelector:
                 "weight": 30,
                 "attribute": "location",
                 "clarification": "In box is inside equipment, out of box is panel mounting.",
-                "parse_prompt": """Determine if the application is in box or out of box. Look for keywords indicating location and environment. 
-                - 'Out of box' can also be mentioned as on Panel,  panel mounting,  external,  outside, on box, or something similar. 
-                - 'In box' can also be mentioned as internal, inside,  on-board, or something similar.""",
+                "parse_prompt": """Determine if the application is in box or out of box. Look for keywords indicating location and environment. - 'Out of box' can also be mentioned as on Panel,  panel mounting,  external,  outside, on box, or something similar. - 'In box' can also be mentioned as internal, inside,  on-board, or something similar.""",
                 "order": 2,
             },
             {
@@ -412,9 +408,7 @@ class LLMConnectorSelector:
                 "weight": 70,
                 "attribute": "housing_material",
                 "clarification": "Metal housing (DMM) provides better durability and EMI protection, plastic housing is lighter and cost-effective.",
-                "parse_prompt": """Determine if the user wants plastic or metal housing. 
-                - If user mentions metallic preference, aluminium, with EMI, need EMI, or steel,  it indicates metal. 
-                - If user mentions , polymer, composite, without EMI, or non-metal, it indicates plastic """,
+                "parse_prompt": """Determine if the user wants plastic or metal housing. - If user mentions metallic preference, aluminium, with EMI, need EMI, or steel,  it indicates metal. - If user mentions , polymer, composite, without EMI, or non-metal, it indicates plastic """,
                 "order": 3,
             },
             {
@@ -1030,7 +1024,7 @@ class LLMConnectorSelector:
             return {
                 "value": default_values[question["attribute"]],
                 "confidence": 0.3,
-                "reasoning": f"Used default value after multiple parse failures",
+                "reasoning": "Used default value after multiple parse failures",
             }
 
         # Last resort
@@ -1647,7 +1641,7 @@ class LLMConnectorSelector:
             logging.info(
                 f"Initial message provided sufficient critical information (Score: {best_score})"
             )
-            logging.info(f"Skipping questions and proceeding to recommendation")
+            logging.info("Skipping questions and proceeding to recommendation")
             return {
                 "status": "complete",
                 "recommendation_ready": True,
@@ -1878,7 +1872,7 @@ class LLMConnectorSelector:
                         "recommendation": {
                             "connector": "error",
                             "confidence": "error",
-                            "analysis": f"I apologize, but I encountered an error while generating my recommendation. Please try again or provide more details about your requirements.",
+                            "analysis": "I apologize, but I encountered an error while generating my recommendation. Please try again or provide more details about your requirements.",
                             "requirements": "Error processing requirements",
                             "requirements_summary": "Error processing requirements summary",
                             "confidence_scores": {
@@ -2582,7 +2576,7 @@ class LLMConnectorSelector:
                 else:
                     attr_score = 1.0
                     matched_attrs.append(attr)
-                    logging.info(f"High power not required, connector compatible")
+                    logging.info("High power not required, connector compatible")
 
             # Special handling for temperature
             elif attr == "temp_range":
@@ -2835,13 +2829,13 @@ class LLMConnectorSelector:
                 elif attr == "emi_protection":
                     if value and not connector_specs.get("emi_protection", False):
                         unconfirmed_features.append(
-                            f"EMI protection is required but not standard with this connector"
+                            "EMI protection is required but not standard with this connector"
                         )
 
                 elif attr == "mixed_power_signal":
                     if value and not connector_specs.get("mixed_power_signal", False):
                         unconfirmed_features.append(
-                            f"Mixed power/signal capability is required but may need special configuration"
+                            "Mixed power/signal capability is required but may need special configuration"
                         )
 
                 elif attr == "right_angle":
@@ -2917,7 +2911,7 @@ class LLMConnectorSelector:
                     logging.error(f"Error generating contact recommendation: {str(e)}")
                     fallback_text = (
                         f"Based on your requirements ({requirements_summary}), I don't have enough information to confidently "
-                        f"recommend a specific connector. For personalized assistance with your "
+                        "recommend a specific connector. For personalized assistance with your "
                         f"connector selection, please contact Nicomatic's support team directly at {lnk}"
                     )
 
@@ -3039,7 +3033,7 @@ class LLMConnectorSelector:
                 fallback_message = (
                     f"Based on your requirements:\n\n{requirements_summary}\n\n"
                     f"I recommend the {best_connector} connector from Nicomatic's range. "
-                    f"This connector best matches your specifications for connection type, current requirements, and orientation. "
+                    "This connector best matches your specifications for connection type, current requirements, and orientation. "
                     f"{specs_info}"
                     f"{feature_notes}\n\n"
                     f"To configure your specific {best_connector} part, please use this link: {link}"
