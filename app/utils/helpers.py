@@ -1,7 +1,6 @@
 import os
 import logging
-import re
-from typing import Dict, List, Any, Optional, Tuple
+from typing import List, Optional
 
 
 def ensure_directory_exists(directory_path: str) -> bool:
