@@ -1,6 +1,5 @@
-import re
-from typing import List, Dict, Any
-from llama_index.core.schema import NodeWithScore, QueryBundle, Node
+from typing import List
+from llama_index.core.schema import NodeWithScore, QueryBundle
 from llama_index.core.retrievers import (
     BaseRetriever,
     VectorIndexRetriever,
