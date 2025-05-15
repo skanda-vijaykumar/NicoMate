@@ -12,7 +12,8 @@ def test_health_endpoint():
 
 @pytest.fixture
 async def initialized_app():
-    from app.main import app_ready, startup_complete
+    from app.main import app_ready
+    from app.api.dependencies import startup_complete
     app_ready = True
     if hasattr(startup_complete, 'set') and not startup_complete.is_set():
         startup_complete.set()
@@ -21,7 +22,8 @@ async def initialized_app():
 
 @pytest.mark.asyncio
 async def test_new_session():
-    from app.main import app_ready, startup_complete
+    from app.main import app_ready
+    from app.api.dependencies import startup_complete
     app_ready = True
     if hasattr(startup_complete, 'set') and not startup_complete.is_set():
         startup_complete.set()
