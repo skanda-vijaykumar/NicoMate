@@ -12,8 +12,8 @@ def initialize_database():
                 cur.execute(
                     """
                     SELECT EXISTS (
-                        SELECT FROM information_schema.tables 
-                        WHERE table_schema = 'public' 
+                        SELECT FROM information_schema.tables
+                        WHERE table_schema = 'public'
                         AND table_name = 'chat_history'
                     );
                 """
@@ -40,8 +40,8 @@ def initialize_database():
                 cur.execute(
                     """
                     SELECT EXISTS (
-                        SELECT 1 FROM pg_sequences 
-                        WHERE schemaname = 'public' 
+                        SELECT 1 FROM pg_sequences
+                        WHERE schemaname = 'public'
                         AND sequencename = 'chat_history_id_seq'
                     );
                 """
@@ -59,10 +59,10 @@ def initialize_database():
                     # Creating sequence based on the last number
                     cur.execute(
                         f"""
-                        CREATE SEQUENCE chat_id_seq 
-                        START WITH {next_chat_id} 
-                        INCREMENT BY 1 
-                        NO MAXVALUE 
+                        CREATE SEQUENCE chat_id_seq
+                        START WITH {next_chat_id}
+                        INCREMENT BY 1
+                        NO MAXVALUE
                         NO CYCLE
                     """
                     )
@@ -92,8 +92,8 @@ def load_session_mapping():
                 # Get the most recent session for each chat_id
                 cur.execute(
                     """
-                    SELECT DISTINCT ON (chat_id) session_id, chat_id, created_at 
-                    FROM chat_history 
+                    SELECT DISTINCT ON (chat_id) session_id, chat_id, created_at
+                    FROM chat_history
                     ORDER BY chat_id, created_at DESC
                 """
                 )
