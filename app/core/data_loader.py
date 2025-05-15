@@ -11,7 +11,6 @@ from llama_index.core import (
     StorageContext,
 )
 from llama_index.core.node_parser import SentenceWindowNodeParser, MarkdownNodeParser
-from llama_index.embeddings.nomic import NomicEmbedding
 from llama_index.llms.ollama import Ollama
 from langchain_ollama import OllamaEmbeddings
 
@@ -32,7 +31,6 @@ def load_data(directory_path):
         # Split into pages and captures the page number
         splits = re.split(r"\s*<!--\s*PAGE:\s*(\d+)\s*-->\s*", raw)
         it = iter(splits)
-        preamble = next(it)
         for page_num, page_text in zip(it, it):
             # Build metadata
             meta = {
@@ -60,7 +58,6 @@ def load_data(directory_path):
 
             splits = re.split(r"\s*<!--\s*PAGE:\s*(\d+)\s*-->\s*", raw)
             it = iter(splits)
-            preamble = next(it)
             for page_num, page_text in zip(it, it):
                 meta = {
                     "file_type": "markdown",
