@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
@@ -10,10 +10,9 @@ import logging
 from datetime import datetime
 import urllib.parse
 import os
-
 from app.main import session_mapping, app_ready
 from app.db.models import get_session_history
-from app.db.database import get_next_chat_id, get_db_connection
+from app.db.database import get_db_connection
 from app.api.dependencies import startup_complete, get_agent
 from app.config import TEMPLATES_DIR
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
@@ -292,20 +291,20 @@ async def get_source_document(file_path: str, page: int = 1):
             html_content = f"""
             <!DOCTYPE html>
             <html>
-            <head> 
-                <title>Source Document: {filename}</title> 
-                <style> 
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; }} 
+            <head>
+                <title>Source Document: {filename}</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; }}
                     pre {{ background-color: #f5f5f5; padding: 15px; border-radius: 5px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }}
-                    h1 {{ color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }} 
-                    .filepath {{ color: #666; font-size: 0.9em; margin-bottom: 20px; }} 
-                </style> 
-            </head> 
-            <body> 
-                <h1>Source Document: {filename}</h1> 
-                <div class="filepath">Full path: {decoded_path}</div> 
-                <pre>{content}</pre> 
-            </body> 
+                    h1 {{ color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }}
+                    .filepath {{ color: #666; font-size: 0.9em; margin-bottom: 20px; }}
+                </style>
+            </head>
+            <body>
+                <h1>Source Document: {filename}</h1>
+                <div class="filepath">Full path: {decoded_path}</div>
+                <pre>{content}</pre>
+            </body>
             </html>
             """
             return HTMLResponse(content=html_content)
